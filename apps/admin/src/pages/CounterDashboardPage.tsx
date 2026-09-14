@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { fetchCounterOrders, updateCounterItemStatus } from '../api/adminClient';
+import { fetchCounterOrders, updateCounterTicketStatus } from '../api/adminClient';
 import { useAuth } from '../context/AuthContext';
 import { Check, Clock } from 'lucide-react';
 
@@ -8,15 +8,18 @@ export const CounterDashboardPage: React.FC = () => {
   const counterId = user?.counterId || 'counter-tea';
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const loadCounterItems = () => {
     fetchCounterOrders(counterId)
       .then((data) => {
-        setItems(data.counterItems || []);
+        setItems(data.tickets || data.counterItems || []);
+        setError(null);
         setLoading(false);
       })
       .catch((err) => {
-        console.error(err);
+        console.error('Failed to load counter items:', err);
+        setError(err.message || 'Unable to connect to the server');
         setLoading(false);
       });
   };
@@ -27,12 +30,32 @@ export const CounterDashboardPage: React.FC = () => {
     return () => clearInterval(interval);
   }, [counterId]);
 
-  const handleUpdateStatus = async (itemId: string, newStatus: string) => {
-    await updateCounterItemStatus(counterId, itemId, newStatus);
-    loadCounterItems();
+  const handleUpdateStatus = async (ticketOrItemId: string, newStatus: string) => {
+    try {
+      await updateCounterTicketStatus(counterId, ticketOrItemId, newStatus);
+      loadCounterItems();
+    } catch (err: any) {
+      alert(err.message || 'Failed to update item status');
+    }
   };
 
-  if (loading) return <div>Loading counter display...</div>;
+  if (loading) return <div style={{ padding: 24, color: '#64748b' }}>Loading counter display...</div>;
+
+  if (error) {
+    return (
+      <div style={{ padding: 24 }}>
+        <div className="top-bar">
+          <h1 className="page-title">Counter Preparation Screen (KOT)</h1>
+        </div>
+        <div className="table-card" style={{ padding: 32, textAlign: 'center' }}>
+          <p style={{ color: '#ef4444', fontWeight: 600, marginBottom: 12 }}>{error}</p>
+          <button className="btn btn-primary" onClick={() => { setLoading(true); loadCounterItems(); }}>
+            Retry Loading Counter
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>

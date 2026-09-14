@@ -1,16 +1,59 @@
 import React, { useEffect, useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 
+const ENV_API_URL = import.meta.env.VITE_API_BASE_URL?.replace(/\/+$/, '');
+const API_BASE = ENV_API_URL ? `${ENV_API_URL}/api` : '/api';
+
 export const SettingsPage: React.FC = () => {
   const [shop, setShop] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadData = () => {
+    setLoading(true);
+    fetch(`${API_BASE}/admin/settings`, {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('queueless_admin_token')}`,
+      },
+    })
+      .then(async (r) => {
+        const d = await r.json().catch(() => null);
+        if (!r.ok || !d?.success) {
+          throw new Error(d?.error || 'Failed to load shop settings');
+        }
+        setShop(d.settings);
+        setError(null);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error('Failed to load settings:', err);
+        setError(err.message || 'Unable to connect to the server');
+        setLoading(false);
+      });
+  };
 
   useEffect(() => {
-    fetch('/api/admin/settings', {
-      headers: { Authorization: `Bearer ${localStorage.getItem('queueless_admin_token')}` },
-    })
-      .then((r) => r.json())
-      .then((d) => setShop(d.settings));
+    loadData();
   }, []);
+
+  if (loading) return <div style={{ padding: 24, color: '#64748b' }}>Loading settings...</div>;
+
+  if (error) {
+    return (
+      <div style={{ padding: 24 }}>
+        <div className="top-bar">
+          <h1 className="page-title">Shop Settings & Printable QR Code</h1>
+        </div>
+        <div className="table-card" style={{ padding: 32, textAlign: 'center' }}>
+          <p style={{ color: '#ef4444', fontWeight: 600, marginBottom: 12 }}>{error}</p>
+          <button className="btn btn-primary" onClick={loadData}>
+            Retry Loading Settings
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const qrUrl = `${window.location.protocol}//${window.location.hostname}:5173/s/${shop?.slug || 'sri-lakshmi-tea'}`;
 

@@ -22,13 +22,21 @@ export async function adminLogin(credentials: any) {
 
 export async function fetchDashboardData() {
   const res = await fetch(`${API_BASE}/admin/dashboard`, { headers: getHeaders() });
-  return res.json();
+  const data = await res.json().catch(() => null);
+  if (!res.ok || !data?.success) {
+    throw new Error(data?.error || `Failed to fetch dashboard (HTTP ${res.status})`);
+  }
+  return data;
 }
 
 export async function fetchOrders(params: any = {}) {
   const query = new URLSearchParams(params).toString();
   const res = await fetch(`${API_BASE}/admin/orders?${query}`, { headers: getHeaders() });
-  return res.json();
+  const data = await res.json().catch(() => null);
+  if (!res.ok || !data?.success) {
+    throw new Error(data?.error || `Failed to fetch orders (HTTP ${res.status})`);
+  }
+  return data;
 }
 
 export async function updateOrderStatus(orderId: string, status: string) {
@@ -37,7 +45,11 @@ export async function updateOrderStatus(orderId: string, status: string) {
     headers: getHeaders(),
     body: JSON.stringify({ status }),
   });
-  return res.json();
+  const data = await res.json().catch(() => null);
+  if (!res.ok || !data?.success) {
+    throw new Error(data?.error || `Failed to update status (HTTP ${res.status})`);
+  }
+  return data;
 }
 
 export async function confirmCashPayment(orderId: string) {
@@ -45,12 +57,20 @@ export async function confirmCashPayment(orderId: string) {
     method: 'POST',
     headers: getHeaders(),
   });
-  return res.json();
+  const data = await res.json().catch(() => null);
+  if (!res.ok || !data?.success) {
+    throw new Error(data?.error || `Failed to confirm payment (HTTP ${res.status})`);
+  }
+  return data;
 }
 
 export async function fetchProducts() {
   const res = await fetch(`${API_BASE}/admin/products`, { headers: getHeaders() });
-  return res.json();
+  const data = await res.json().catch(() => null);
+  if (!res.ok || !data?.success) {
+    throw new Error(data?.error || `Failed to fetch products (HTTP ${res.status})`);
+  }
+  return data;
 }
 
 export async function createProduct(payload: any) {
@@ -59,7 +79,11 @@ export async function createProduct(payload: any) {
     headers: getHeaders(),
     body: JSON.stringify(payload),
   });
-  return res.json();
+  const data = await res.json().catch(() => null);
+  if (!res.ok || !data?.success) {
+    throw new Error(data?.error || `Failed to create product (HTTP ${res.status})`);
+  }
+  return data;
 }
 
 export async function updateProduct(id: string, payload: any) {
@@ -68,12 +92,20 @@ export async function updateProduct(id: string, payload: any) {
     headers: getHeaders(),
     body: JSON.stringify(payload),
   });
-  return res.json();
+  const data = await res.json().catch(() => null);
+  if (!res.ok || !data?.success) {
+    throw new Error(data?.error || `Failed to update product (HTTP ${res.status})`);
+  }
+  return data;
 }
 
 export async function fetchCategories() {
   const res = await fetch(`${API_BASE}/admin/categories`, { headers: getHeaders() });
-  return res.json();
+  const data = await res.json().catch(() => null);
+  if (!res.ok || !data?.success) {
+    throw new Error(data?.error || `Failed to fetch categories (HTTP ${res.status})`);
+  }
+  return data;
 }
 
 export async function createCategory(payload: any) {
@@ -82,7 +114,11 @@ export async function createCategory(payload: any) {
     headers: getHeaders(),
     body: JSON.stringify(payload),
   });
-  return res.json();
+  const data = await res.json().catch(() => null);
+  if (!res.ok || !data?.success) {
+    throw new Error(data?.error || `Failed to create category (HTTP ${res.status})`);
+  }
+  return data;
 }
 
 export async function updateCategory(id: string, payload: any) {
@@ -91,7 +127,11 @@ export async function updateCategory(id: string, payload: any) {
     headers: getHeaders(),
     body: JSON.stringify(payload),
   });
-  return res.json();
+  const data = await res.json().catch(() => null);
+  if (!res.ok || !data?.success) {
+    throw new Error(data?.error || `Failed to update category (HTTP ${res.status})`);
+  }
+  return data;
 }
 
 export async function deleteCategory(id: string) {
@@ -99,34 +139,58 @@ export async function deleteCategory(id: string) {
     method: 'DELETE',
     headers: getHeaders(),
   });
-  return res.json();
+  const data = await res.json().catch(() => null);
+  if (!res.ok || !data?.success) {
+    throw new Error(data?.error || `Failed to delete category (HTTP ${res.status})`);
+  }
+  return data;
 }
 
 export async function fetchCounters() {
   const res = await fetch(`${API_BASE}/admin/counters`, { headers: getHeaders() });
-  return res.json();
+  const data = await res.json().catch(() => null);
+  if (!res.ok || !data?.success) {
+    throw new Error(data?.error || `Failed to fetch counters (HTTP ${res.status})`);
+  }
+  return data;
 }
 
 export async function fetchStaff() {
   const res = await fetch(`${API_BASE}/admin/staff`, { headers: getHeaders() });
-  return res.json();
+  const data = await res.json().catch(() => null);
+  if (!res.ok || !data?.success) {
+    throw new Error(data?.error || `Failed to fetch staff (HTTP ${res.status})`);
+  }
+  return data;
 }
 
 export async function fetchAuditLogs() {
   const res = await fetch(`${API_BASE}/admin/audit-logs`, { headers: getHeaders() });
-  return res.json();
+  const data = await res.json().catch(() => null);
+  if (!res.ok || !data?.success) {
+    throw new Error(data?.error || `Failed to fetch audit logs (HTTP ${res.status})`);
+  }
+  return data;
 }
 
 export async function fetchCounterOrders(counterId: string) {
   const res = await fetch(`${API_BASE}/counter/${counterId}/orders`, { headers: getHeaders() });
-  return res.json();
+  const data = await res.json().catch(() => null);
+  if (!res.ok || !data?.success) {
+    throw new Error(data?.error || `Failed to fetch counter orders (HTTP ${res.status})`);
+  }
+  return data;
 }
 
-export async function updateCounterItemStatus(counterId: string, itemId: string, status: string) {
-  const res = await fetch(`${API_BASE}/counter/${counterId}/items/${itemId}/status`, {
+export async function updateCounterTicketStatus(counterId: string, ticketId: string, status: string) {
+  const res = await fetch(`${API_BASE}/counter/${counterId}/tickets/${ticketId}/status`, {
     method: 'PATCH',
     headers: getHeaders(),
     body: JSON.stringify({ status }),
   });
-  return res.json();
+  const data = await res.json().catch(() => null);
+  if (!res.ok || !data?.success) {
+    throw new Error(data?.error || `Failed to update counter ticket (HTTP ${res.status})`);
+  }
+  return data;
 }

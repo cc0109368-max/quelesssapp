@@ -5,15 +5,18 @@ import { Printer, CheckCircle } from 'lucide-react';
 export const OrdersPage: React.FC = () => {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const loadOrders = () => {
     fetchOrders()
       .then((data) => {
         setOrders(data.orders || []);
+        setError(null);
         setLoading(false);
       })
       .catch((err) => {
-        console.error(err);
+        console.error('Failed to load orders:', err);
+        setError(err.message || 'Unable to connect to the server');
         setLoading(false);
       });
   };
@@ -25,16 +28,40 @@ export const OrdersPage: React.FC = () => {
   }, []);
 
   const handleStatusChange = async (orderId: string, newStatus: string) => {
-    await updateOrderStatus(orderId, newStatus);
-    loadOrders();
+    try {
+      await updateOrderStatus(orderId, newStatus);
+      loadOrders();
+    } catch (err: any) {
+      alert(err.message || 'Failed to update order status');
+    }
   };
 
   const handleCashConfirm = async (orderId: string) => {
-    await confirmCashPayment(orderId);
-    loadOrders();
+    try {
+      await confirmCashPayment(orderId);
+      loadOrders();
+    } catch (err: any) {
+      alert(err.message || 'Failed to confirm cash payment');
+    }
   };
 
-  if (loading) return <div>Loading orders...</div>;
+  if (loading) return <div style={{ padding: 24, color: '#64748b' }}>Loading orders...</div>;
+
+  if (error) {
+    return (
+      <div style={{ padding: 24 }}>
+        <div className="top-bar">
+          <h1 className="page-title">Orders Management</h1>
+        </div>
+        <div className="table-card" style={{ padding: 32, textAlign: 'center' }}>
+          <p style={{ color: '#ef4444', fontWeight: 600, marginBottom: 12 }}>{error}</p>
+          <button className="btn btn-primary" onClick={() => { setLoading(true); loadOrders(); }}>
+            Retry Loading Orders
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>

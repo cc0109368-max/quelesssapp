@@ -16,9 +16,19 @@ const app = express();
 const server = http.createServer(app);
 
 // CORS
-const rawCors = process.env.CORS_ORIGIN || 'http://localhost:5173,http://localhost:5174,http://localhost:3000';
-const corsOrigins = rawCors.split(',').map((o) => o.trim()).filter(Boolean);
-app.use(cors({ origin: corsOrigins.length === 1 && corsOrigins[0] === '*' ? '*' : corsOrigins, credentials: true }));
+const rawCors = process.env.CORS_ORIGIN || '*';
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || rawCors === '*' || rawCors.split(',').map((o) => o.trim()).includes(origin) || origin.endsWith('.vercel.app')) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    credentials: true,
+  })
+);
 
 // Body parsing
 app.use(express.json({ limit: '1mb' }));

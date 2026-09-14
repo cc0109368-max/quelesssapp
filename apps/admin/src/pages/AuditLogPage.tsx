@@ -4,15 +4,44 @@ import { fetchAuditLogs } from '../api/adminClient';
 export const AuditLogPage: React.FC = () => {
   const [logs, setLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadData = () => {
+    setLoading(true);
+    fetchAuditLogs()
+      .then((data) => {
+        setLogs(data.logs || []);
+        setError(null);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error('Failed to load audit logs:', err);
+        setError(err.message || 'Unable to connect to the server');
+        setLoading(false);
+      });
+  };
 
   useEffect(() => {
-    fetchAuditLogs().then((data) => {
-      setLogs(data.logs || []);
-      setLoading(false);
-    });
+    loadData();
   }, []);
 
-  if (loading) return <div>Loading audit trail...</div>;
+  if (loading) return <div style={{ padding: 24, color: '#64748b' }}>Loading audit trail...</div>;
+
+  if (error) {
+    return (
+      <div style={{ padding: 24 }}>
+        <div className="top-bar">
+          <h1 className="page-title">Immutable Action Audit Logs</h1>
+        </div>
+        <div className="table-card" style={{ padding: 32, textAlign: 'center' }}>
+          <p style={{ color: '#ef4444', fontWeight: 600, marginBottom: 12 }}>{error}</p>
+          <button className="btn btn-primary" onClick={loadData}>
+            Retry Loading Logs
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>

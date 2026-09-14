@@ -7,6 +7,7 @@ export const MenuPage: React.FC = () => {
   const [categories, setCategories] = useState<any[]>([]);
   const [counters, setCounters] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
 
   const [name, setName] = useState('');
@@ -15,6 +16,7 @@ export const MenuPage: React.FC = () => {
   const [counterId, setCounterId] = useState('');
 
   const loadData = () => {
+    setLoading(true);
     Promise.all([fetchProducts(), fetchCategories(), fetchCounters()])
       .then(([prodRes, catRes, countRes]) => {
         setProducts(prodRes.products || []);
@@ -22,6 +24,12 @@ export const MenuPage: React.FC = () => {
         setCounters(countRes.counters || []);
         if (catRes.categories?.[0]) setCategoryId(catRes.categories[0].id);
         if (countRes.counters?.[0]) setCounterId(countRes.counters[0].id);
+        setError(null);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error('Failed to load menu data:', err);
+        setError(err.message || 'Unable to connect to the server');
         setLoading(false);
       });
   };
@@ -31,9 +39,13 @@ export const MenuPage: React.FC = () => {
   }, []);
 
   const handleToggleAvailability = async (product: any) => {
-    const newStatus = product.availability === 'AVAILABLE' ? 'SOLD_OUT' : 'AVAILABLE';
-    await updateProduct(product.id, { availability: newStatus });
-    loadData();
+    try {
+      const newStatus = product.availability === 'AVAILABLE' ? 'SOLD_OUT' : 'AVAILABLE';
+      await updateProduct(product.id, { availability: newStatus });
+      loadData();
+    } catch (err: any) {
+      alert(err.message || 'Failed to update product availability');
+    }
   };
 
   const handleCreateProduct = async (e: React.FormEvent) => {
@@ -50,7 +62,23 @@ export const MenuPage: React.FC = () => {
     loadData();
   };
 
-  if (loading) return <div>Loading menu items...</div>;
+  if (loading) return <div style={{ padding: 24, color: '#64748b' }}>Loading menu items...</div>;
+
+  if (error) {
+    return (
+      <div style={{ padding: 24 }}>
+        <div className="top-bar">
+          <h1 className="page-title">Menu & Items Management</h1>
+        </div>
+        <div className="table-card" style={{ padding: 32, textAlign: 'center' }}>
+          <p style={{ color: '#ef4444', fontWeight: 600, marginBottom: 12 }}>{error}</p>
+          <button className="btn btn-primary" onClick={loadData}>
+            Retry Loading Items
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>

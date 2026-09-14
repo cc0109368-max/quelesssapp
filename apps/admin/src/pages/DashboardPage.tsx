@@ -7,21 +7,45 @@ export const DashboardPage: React.FC = () => {
   const [data, setData] = useState<any>(null);
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const loadData = () => {
+    setLoading(true);
     Promise.all([fetchDashboardData(), fetchOrders({ limit: '5' })])
       .then(([dashData, ordersData]) => {
         setData(dashData);
         setRecentOrders(ordersData.orders || []);
+        setError(null);
         setLoading(false);
       })
       .catch((err) => {
-        console.error(err);
+        console.error('Failed to load dashboard:', err);
+        setError(err.message || 'Unable to connect to the server');
         setLoading(false);
       });
+  };
+
+  useEffect(() => {
+    loadData();
   }, []);
 
-  if (loading) return <div>Loading dashboard...</div>;
+  if (loading) return <div style={{ padding: 24, color: '#64748b' }}>Loading dashboard...</div>;
+
+  if (error) {
+    return (
+      <div style={{ padding: 24 }}>
+        <div className="top-bar">
+          <h1 className="page-title">Dashboard & Real-time Metrics</h1>
+        </div>
+        <div className="table-card" style={{ padding: 32, textAlign: 'center' }}>
+          <p style={{ color: '#ef4444', fontWeight: 600, marginBottom: 12 }}>{error}</p>
+          <button className="btn btn-primary" onClick={loadData}>
+            Retry Loading Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>

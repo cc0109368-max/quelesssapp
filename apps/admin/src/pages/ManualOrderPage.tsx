@@ -1,20 +1,38 @@
 import React, { useEffect, useState } from 'react';
 import { fetchProducts } from '../api/adminClient';
+import { useAuth } from '../context/AuthContext';
 import { Plus, Minus, ShoppingCart } from 'lucide-react';
 
+const ENV_API_URL = import.meta.env.VITE_API_BASE_URL?.replace(/\/+$/, '');
+const API_BASE = ENV_API_URL ? `${ENV_API_URL}/api` : '/api';
+
 export const ManualOrderPage: React.FC = () => {
+  const { user } = useAuth();
   const [products, setProducts] = useState<any[]>([]);
   const [cart, setCart] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [successOrder, setSuccessOrder] = useState<any>(null);
 
+  const loadData = () => {
+    setLoading(true);
+    fetchProducts()
+      .then((data) => {
+        setProducts(data.products?.filter((p: any) => p.availability === 'AVAILABLE') || []);
+        setError(null);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error('Failed to load products for POS:', err);
+        setError(err.message || 'Unable to connect to the server');
+        setLoading(false);
+      });
+  };
+
   useEffect(() => {
-    fetchProducts().then((data) => {
-      setProducts(data.products?.filter((p: any) => p.availability === 'AVAILABLE') || []);
-      setLoading(false);
-    });
+    loadData();
   }, []);
 
   const addToCart = (product: any) => {
@@ -41,31 +59,53 @@ export const ManualOrderPage: React.FC = () => {
 
   const handlePlaceOrder = async () => {
     if (cart.length === 0) return;
-    const res = await fetch('/api/admin/orders/manual', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${localStorage.getItem('queueless_admin_token')}`,
-      },
-      body: JSON.stringify({
-        shopId: 'shop-sri-lakshmi',
-        items: cart.map((c) => ({ productId: c.productId, quantity: c.quantity })),
-        paymentMethod: 'CASH',
-        customerName: customerName || undefined,
-        customerPhone: customerPhone || undefined,
-      }),
-    });
+    try {
+      const res = await fetch(`${API_BASE}/admin/orders/manual`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('queueless_admin_token')}`,
+        },
+        body: JSON.stringify({
+          shopId: user?.shopId,
+          items: cart.map((c) => ({ productId: c.productId, quantity: c.quantity })),
+          paymentMethod: 'CASH',
+          customerName: customerName || undefined,
+          customerPhone: customerPhone || undefined,
+        }),
+      });
 
-    const data = await res.json();
-    if (data.success) {
-      setSuccessOrder(data.order);
-      setCart([]);
-      setCustomerName('');
-      setCustomerPhone('');
+      const data = await res.json().catch(() => null);
+      if (data?.success) {
+        setSuccessOrder(data.order);
+        setCart([]);
+        setCustomerName('');
+        setCustomerPhone('');
+      } else {
+        alert(data?.error || 'Failed to place order');
+      }
+    } catch (err: any) {
+      alert(err.message || 'Failed to place order');
     }
   };
 
-  if (loading) return <div>Loading POS...</div>;
+  if (loading) return <div style={{ padding: 24, color: '#64748b' }}>Loading POS...</div>;
+
+  if (error) {
+    return (
+      <div style={{ padding: 24 }}>
+        <div className="top-bar">
+          <h1 className="page-title">Quick Counter POS Billing</h1>
+        </div>
+        <div className="table-card" style={{ padding: 32, textAlign: 'center' }}>
+          <p style={{ color: '#ef4444', fontWeight: 600, marginBottom: 12 }}>{error}</p>
+          <button className="btn btn-primary" onClick={loadData}>
+            Retry Loading POS
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
