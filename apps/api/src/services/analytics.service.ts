@@ -97,17 +97,28 @@ export class AnalyticsService {
     });
 
     const dailyRevenue: Record<string, number> = {};
+    let totalRevenue = 0;
     for (const order of weeklyOrders) {
       const day = order.createdAt.toISOString().split('T')[0];
       dailyRevenue[day] = (dailyRevenue[day] || 0) + order.total;
+      totalRevenue += order.total;
     }
 
+    const totalOrders = weeklyOrders.length;
+    const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+
+    const topProducts = popularProducts.map((p: any) => ({
+      name: p.productName,
+      quantity: p._sum.quantity || 0,
+      revenue: p._sum.totalPrice || 0,
+    }));
+
     return {
-      popularProducts: popularProducts.map((p: any) => ({
-        name: p.productName,
-        totalQuantity: p._sum.quantity || 0,
-        totalRevenue: p._sum.totalPrice || 0,
-      })),
+      totalRevenue,
+      totalOrders,
+      averageOrderValue,
+      topProducts,
+      popularProducts: topProducts,
       recentOrders,
       dailyRevenue,
     };

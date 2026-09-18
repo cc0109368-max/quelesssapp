@@ -85,10 +85,12 @@ export const CounterDashboardPage: React.FC = () => {
               </div>
 
               <div style={{ marginBottom: 16 }}>
-                <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0f172a' }}>
-                  {item.quantity}x {item.productName}
-                </div>
-                {item.order.customerName && (
+                {item.order?.items?.map((orderItem: any) => (
+                  <div key={orderItem.id} style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0f172a', marginBottom: 4 }}>
+                    {orderItem.quantity}x {orderItem.productName}
+                  </div>
+                ))}
+                {item.order?.customerName && (
                   <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: 4 }}>
                     Customer: {item.order.customerName}
                   </div>
